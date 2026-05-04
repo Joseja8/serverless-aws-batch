@@ -48,6 +48,14 @@ provider:
       <Key>: <Value> # Default "Name": "AWS Batch Instance - <service>"
 ```
 
+For `Type: FARGATE` or `Type: FARGATE_SPOT`, provider-level `Tags` are applied
+to generated job queues and job definitions, but not to the compute environment;
+AWS Batch rejects compute-environment tags for Fargate resources.
+
+The plugin does not set custom physical names on generated job queues or compute
+environments. CloudFormation-managed names avoid replacement collisions during
+stack updates.
+
 And then define our [AWS Batch Job Definition](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-batch-jobdefinition.html)
 on the function definition
 
