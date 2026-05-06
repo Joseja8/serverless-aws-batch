@@ -52,9 +52,19 @@ For `Type: FARGATE` or `Type: FARGATE_SPOT`, provider-level `Tags` are applied
 to generated job queues and job definitions, but not to the compute environment;
 AWS Batch rejects compute-environment tags for Fargate resources.
 
-The plugin does not set custom physical names on generated job queues or compute
-environments. CloudFormation-managed names avoid replacement collisions during
-stack updates.
+The plugin sets generated job queues to the conventional physical name
+`<service>-<stage>-JobQueue`. Generated compute environments do not set custom
+physical names; they use compact service/stage-scoped CloudFormation logical IDs
+that keep CloudFormation-managed names recognizable while avoiding replacement
+collisions during stack updates.
+
+Repeated deploys are safe when the job queue is updated in place. However,
+`AWS::Batch::JobQueue` changes that require replacement can collide with the
+static physical queue name because CloudFormation may try to create the
+replacement before deleting the existing queue. In particular, changing
+provider-level `Tags` changes the generated job queue `Tags`, and queue tags are
+replacement-required. Keep queue tags stable, or plan the replacement explicitly
+before changing queue tags, `JobQueueName`, or `JobQueueType`.
 
 And then define our [AWS Batch Job Definition](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-batch-jobdefinition.html)
 on the function definition
