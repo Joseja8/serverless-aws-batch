@@ -46,6 +46,10 @@ provider:
     MaxvCpus: <Integer> # Optional. Default 2
     Tags: # Optional
       <Key>: <Value> # Default "Name": "AWS Batch Instance - <service>"
+    ExecutionTags: # Optional. Runtime SubmitJob tags resolved from the invocation event.
+      <TagKey>: $.<event.path>
+    JobNameSuffixes: # Optional. Runtime jobName suffixes resolved from the invocation event.
+      - $.<event.path>
 ```
 
 For `Type: FARGATE` or `Type: FARGATE_SPOT`, provider-level `Tags` are applied
@@ -85,7 +89,23 @@ functions:
         Attempts: <Integer> # Optional. Defaults to 1
       Timeout:
         AttemptDurationSeconds: <Integer> # Optional. Defaults to 300
+      ExecutionTags: # Optional. Merged with provider.batch.ExecutionTags.
+        <TagKey>: $.<event.path>
+      JobNameSuffixes: # Optional. Appended after provider.batch.JobNameSuffixes.
+        - $.<event.path>
 ```
+
+`ExecutionTags` lets each repository define its own request-level Batch job tags
+without plugin-specific knowledge of the event schema. The generated scheduler
+Lambda resolves each configured value from the event, submits it in
+`SubmitJob.tags`, and keeps `propagateTags: true` so job tags propagate to the
+backing ECS task. Missing or empty values are omitted. Use JSON paths such as
+`$.customer_id`; constant values can be expressed as `{ value: "example" }`, and
+environment variables as `{ env: "NAME" }`.
+
+`JobNameSuffixes` follows the same value syntax and appends non-empty resolved
+values to the generated Batch job name after sanitizing for AWS Batch job-name
+rules. No event field names are special-cased by the plugin.
 
 And now you should be able to write your batch function like you would any other serverless lambda function:
 
